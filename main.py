@@ -28,6 +28,7 @@ def showImages(actual, target, output1, output2):
 #target_image, target_alpha = detector.load_target_img("images/cage.png")
 # target_image = detector.load_target_img("images/drew.jpg")
 drive = Path("E:\Authentiface Dataset")
+np.random.seed(0)
 randomVideo = np.random.choice(list(drive.rglob('*.mkv')))
 target_image = detector.load_target_video(str(randomVideo))
 #target_image, target_alpha = detector.load_target_img("images/trump.png")
