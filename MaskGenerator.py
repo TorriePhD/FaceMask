@@ -2,7 +2,7 @@
 
 import cv2
 import numpy as np
-
+from points import oval
 
 class MaskGenerator:
     def __init__(self):
@@ -99,7 +99,7 @@ class MaskGenerator:
                 (1.0, 1.0, 1.0) - mask)
         img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]] = img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]] + img2Rect
 
-    def calculateTargetInfo(self, target_image, target_alpha, target_landmarks):
+    def calculateTargetInfo(self, target_image, target_landmarks):
 
         hull, hullIndex = self.find_convex_hull(target_landmarks)
 
@@ -110,13 +110,13 @@ class MaskGenerator:
         self.target["image"] = target_image
         self.target["width"] = sizeImg1[1]
         self.target["height"] = sizeImg1[0]
-        self.target["alpha"] = target_alpha
+        # self.target["alpha"] = target_alpha
         self.target["landmarks"] = target_landmarks
         self.target["hull"] = hull
         self.target["hullIndex"] = hullIndex
         self.target["dt"] = dt
 
-    def applyTargetMask(self, actual_img, actual_landmarks):
+    def applyTargetMask(self, actual_img, actual_landmarks,target_landmarks):
         warped_img = np.copy(actual_img)
 
         hull2 = []
@@ -125,7 +125,10 @@ class MaskGenerator:
 
         mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
         mask1 = cv2.merge((mask1, mask1, mask1))
-        img1_alpha_mask = cv2.merge((self.target["alpha"], self.target["alpha"], self.target["alpha"]))
+        # img1_alpha_mask = cv2.merge((self.target["alpha"], self.target["alpha"], self.target["alpha"]))
+        ovalPoints = np.array(target_landmarks)[oval].reshape((-1, 1, 2))
+        cv2.fillPoly(mask1, [ovalPoints], (255, 255, 255))
+        cv2.imshow("mask", mask1)
 
         # Warp the triangles
         for i in range(0, len(self.target["dt"])):
@@ -136,7 +139,7 @@ class MaskGenerator:
                 t2.append(hull2[self.target["dt"][i][j]])
 
             self.warpTriangle(self.target["image"], warped_img, t1, t2)
-            self.warpTriangle(img1_alpha_mask, mask1, t1, t2)
+            # self.warpTriangle(img1_alpha_mask, mask1, t1, t2)
 
         mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
         mask2 = (255.0, 255.0, 255.0) - mask1

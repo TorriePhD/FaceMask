@@ -44,10 +44,12 @@ class FaceDetector:
     def load_target_img(self, img_path):
         img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
         img = cv2.resize(img, (480,640), interpolation=cv2.INTER_AREA)
-        b, g, r, alpha = cv2.split(img)
-        img = cv2.merge((b, g, r))
-        return img, alpha
-
+        return img
+    def load_target_vid(self, vid_path):
+        vid = cv2.VideoCapture(vid_path)
+        ret,img = vid.read()
+        img = cv2.resize(img, (480, 640), interpolation=cv2.INTER_AREA)
+        return img
     # Draw landmarks in the image
     def drawLandmarks(self, img, landmarks):
         out = np.copy(img)
@@ -73,7 +75,7 @@ class FaceDetector:
 
         if not results.multi_face_landmarks:
             print('Face not detected!!!')
-            return [], None, None
+            return [], None, None,None
 
         landmarks = []
         height, width = img.shape[:-1]
@@ -95,4 +97,4 @@ class FaceDetector:
             for i in selected_keypoint_indices:
                 landmarks.append(face_keypnts[i])
 
-        return landmarks, img, face_landmarks
+        return landmarks, img, face_landmarks,face_keypnts

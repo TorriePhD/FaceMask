@@ -25,26 +25,27 @@ def showImages(actual, target, output1, output2):
 
 # Target
 #target_image, target_alpha = detector.load_target_img("images/cage.png")
-target_image, target_alpha = detector.load_target_img("images/obama.png")
+# target_image = detector.load_target_img("images/lee.jpg")
+target_image = detector.load_target_vid("images/shad.mp4")
 #target_image, target_alpha = detector.load_target_img("images/trump.png")
 #target_image, target_alpha = detector.load_target_img("images/kim.png")
 #target_image, target_alpha = detector.load_target_img("images/putin.png")
-target_landmarks, _, target_face_landmarks= detector.find_face_landmarks(target_image)
+target_landmarks, _, target_face_landmarks,lmksTarget = detector.find_face_landmarks(target_image)
 target_image_out = detector.drawLandmarks(target_image, target_face_landmarks)
 
-maskGenerator.calculateTargetInfo(target_image, target_alpha, target_landmarks)
+maskGenerator.calculateTargetInfo(target_image, target_landmarks)
 
 while True:
     success, frame = cap.read()
     frame = cv2.flip(frame, 1)
 
-    landmarks, image, face_landmarks = detector.find_face_landmarks(frame)
+    landmarks, image, face_landmarks,allLmks = detector.find_face_landmarks(frame)
     if len(landmarks) == 0:
         continue
 
     detector.stabilizeVideoStream(frame, landmarks)
 
-    output = maskGenerator.applyTargetMask(frame, landmarks)
+    output = maskGenerator.applyTargetMask(frame, landmarks,allLmks)
     output2 = maskGenerator.applyTargetMaskToTarget(landmarks)
 
     image_out = detector.drawLandmarks(image, face_landmarks)
