@@ -44,11 +44,11 @@ while True:
         continue
     rotation = detector.calculateRotation(Unscaledlmks)
     landmarks = detector.rotateLandmarks(landmarks, rotation)
-    landmarks = detector.rotateLandmarks(landmarks, target_rotation)
+    landmarks = detector.rotateLandmarks(landmarks, -target_rotation)
     landmarks = detector.scaleLandmarks(landmarks[:,:2],frame.shape[:-1])
     detector.stabilizeVideoStream(frame, landmarks)
     allLandmarks = detector.rotateLandmarks(allLandmarks, rotation)
-    allLandmarks = detector.rotateLandmarks(allLandmarks, target_rotation)
+    allLandmarks = detector.rotateLandmarks(allLandmarks, -target_rotation)
     allLandmarks = detector.scaleLandmarks(allLandmarks[:, :2], frame.shape[:-1])
     output = maskGenerator.applyTargetMask(frame, landmarks,allLandmarks)
     output2 = maskGenerator.applyTargetMaskToTarget(landmarks)
