@@ -1,5 +1,6 @@
 import numpy as np
 import mediapipe as mp
+from tqdm import tqdm
 mp_face_mesh = mp.solutions.face_mesh
 
 oval = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,140,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109]
@@ -24,3 +25,38 @@ FACEMESH_FACE_OVAL = list(set(np.array(list(mp_face_mesh.FACEMESH_FACE_OVAL)).fl
 FACEMESH_NOSE = list(set(np.array(FACEMESH_NOSE).flatten()))
 
 allPoints = FACEMESH_LIPS + FACEMESH_LEFT_EYE  + FACEMESH_LEFT_EYEBROW + FACEMESH_RIGHT_EYE + FACEMESH_RIGHT_EYEBROW + FACEMESH_FACE_OVAL +FACEMESH_NOSE
+
+
+FACEMESH_TESSELATION = np.array(list(mp_face_mesh.FACEMESH_TESSELATION))
+print(FACEMESH_TESSELATION.shape)
+
+
+def find_triangles(edges):
+    connections = {}
+    triangles = []
+
+    # Build connections dictionary
+    for edge in edges:
+        node1, node2 = edge
+        if node1 in connections:
+            connections[node1].add(node2)
+        else:
+            connections[node1] = {node2}
+        if node2 in connections:
+            connections[node2].add(node1)
+        else:
+            connections[node2] = {node1}
+
+    # Find triangles
+    for edge1 in edges:
+        node1, node2 = edge1
+        if node2 in connections:
+            for node3 in connections[node2]:
+                if node3 in connections[node1]:
+                    triangle = [node1, node2, node3]
+                    triangle.sort()
+                    if triangle not in triangles:
+                        triangles.append(triangle)
+
+    return triangles
+triangles = np.array(find_triangles(FACEMESH_TESSELATION))

@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-from points import oval,allPoints
+from points import oval,allPoints,triangles
 
 class MaskGenerator:
     def __init__(self):
@@ -21,7 +21,7 @@ class MaskGenerator:
         #     [36], [37], [38], [39], [40], [41], [42], [43], [44], [45], [46], [47],  # Eyes
         #     [17], [18], [19], [20], [21], [22], [23], [24], [25], [26]  # Eyebrows
         # ]
-        addPoints = list(np.array(allPoints)[:,None])
+        addPoints = list(np.array(list(range(0,468)))[:,None])
         # hullIndex = np.concatenate((hullIndex, addPoints))
         for i in range(0, len(addPoints)):
             hull.append(points[int(addPoints[i][0])])
@@ -106,8 +106,8 @@ class MaskGenerator:
 
         sizeImg1 = target_image.shape
         rect = (0, 0, sizeImg1[1], sizeImg1[0])
-        dt = self.calculateDelaunayTriangles(rect, hull)
-
+        # dt = self.calculateDelaunayTriangles(rect, hull)
+        dt = triangles
         self.target["image"] = target_image
         self.target["width"] = sizeImg1[1]
         self.target["height"] = sizeImg1[0]
@@ -136,22 +136,17 @@ class MaskGenerator:
                 t2.append(hull2[self.target["dt"][i][j]])
 
             self.warpTriangle(self.target["image"], warped_img, t1, t2)
-
         mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
         mask2 = (255.0, 255.0, 255.0) - mask1
-
         # Alpha blending of the two images
         temp1 = np.multiply(warped_img, (mask1 * (1.0 / 255)))
         temp2 = np.multiply(actual_img, (mask2 * (1.0 / 255)))
 
-        #cv2.imshow('temp1', np.uint8(temp1))
-        #cv2.imshow('temp2', np.uint8(temp2))
 
         output = temp1 + temp2
 
         self.temp1 = temp1
         self.mask1 = mask1
-        # cv2.imshow('mask1', np.uint8(mask1))
         self.temp2 = temp2
 
         return np.uint8(output)
