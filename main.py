@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from Detector import FaceDetector
 from MaskGenerator import MaskGenerator
+from pathlib import Path
 
 cap = cv2.VideoCapture(0)
 detector = FaceDetector()
@@ -25,7 +26,10 @@ def showImages(actual, target, output1, output2):
 
 # Target
 #target_image, target_alpha = detector.load_target_img("images/cage.png")
-target_image = detector.load_target_img("images/lee.jpg")
+# target_image = detector.load_target_img("images/drew.jpg")
+drive = Path("E:\Authentiface Dataset")
+randomVideo = np.random.choice(list(drive.rglob('*.mkv')))
+target_image = detector.load_target_video(str(randomVideo))
 #target_image, target_alpha = detector.load_target_img("images/trump.png")
 #target_image, target_alpha = detector.load_target_img("images/kim.png")
 #target_image, target_alpha = detector.load_target_img("images/putin.png")
@@ -50,10 +54,11 @@ while True:
     allLandmarks = detector.rotateLandmarks(allLandmarks, rotation)
     allLandmarks = detector.rotateLandmarks(allLandmarks, -target_rotation)
     allLandmarks = detector.scaleLandmarks(allLandmarks[:, :2], frame.shape[:-1])
-    output = maskGenerator.applyTargetMask(frame, landmarks,allLandmarks)
+    output = maskGenerator.applyTargetMask(np.zeros_like(frame), landmarks,allLandmarks)
     output2 = maskGenerator.applyTargetMaskToTarget(landmarks)
-
-    # image_out = detector.drawLandmarks(image, allLandmarks)
-    showImages(image, target_image, image, output2)
+    _,_,face_landmarksNew,_,_ = detector.find_face_landmarks(output2)
+    image_out = detector.drawLandmarks(np.zeros_like(output2), face_landmarksNew)
+    image_out1 = detector.drawLandmarks(np.zeros_like(output), face_landmarks)
+    showImages(image, image_out,image_out1 , output2)
 
     cv2.waitKey(1)

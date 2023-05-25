@@ -47,7 +47,11 @@ class FaceDetector:
         img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
         img = cv2.resize(img, (480,640), interpolation=cv2.INTER_AREA)
         return img
-
+    def load_target_video(self, video_path):
+        cap = cv2.VideoCapture(video_path)
+        ret,frame = cap.read()
+        img = cv2.resize(frame, (480,640), interpolation=cv2.INTER_AREA)
+        return img
     # Draw landmarks in the image
     def drawLandmarks(self, img, landmarks):
         out = np.copy(img)
@@ -99,13 +103,13 @@ class FaceDetector:
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = self.faceMesh.process(imgRGB)
 
-        selected_keypoint_indices = [127, 93, 58, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 288, 323, 356,
-                                     70, 63, 105, 66, 55,
-                                     285, 296, 334, 293, 300, 168, 6, 195, 4, 64, 60, 94, 290, 439, 33, 160, 158, 173,
-                                     153, 144, 398, 385,
-                                     387, 466, 373, 380, 61, 40, 39, 0, 269, 270, 291, 321, 405, 17, 181, 91, 78, 81,
-                                     13, 311, 306, 402, 14,
-                                     178, 162, 54, 67, 10, 297, 284, 389]
+        # selected_keypoint_indices = [127, 93, 58, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 288, 323, 356,
+        #                              70, 63, 105, 66, 55,
+        #                              285, 296, 334, 293, 300, 168, 6, 195, 4, 64, 60, 94, 290, 439, 33, 160, 158, 173,
+        #                              153, 144, 398, 385,
+        #                              387, 466, 373, 380, 61, 40, 39, 0, 269, 270, 291, 321, 405, 17, 181, 91, 78, 81,
+        #                              13, 311, 306, 402, 14,
+        #                              178, 162, 54, 67, 10, 297, 284, 389]
 
         if not results.multi_face_landmarks:
             print('Face not detected!!!')
@@ -130,6 +134,6 @@ class FaceDetector:
             # face_keypnts = face_keypnts * (width, height,1)
             # face_keypnts = face_keypnts.astype('int')
             allLandmarks = face_keypnts
-            for i in selected_keypoint_indices:
-                landmarks.append(face_keypnts[i])
-        return landmarks, img, face_landmarks,allLandmarks,original_face_keypnts
+            # for i in selected_keypoint_indices:
+            #     landmarks.append(face_keypnts[i])
+        return face_keypnts, img, face_landmarks,allLandmarks,original_face_keypnts

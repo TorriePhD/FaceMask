@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-from points import oval
+from points import oval,allPoints
 
 class MaskGenerator:
     def __init__(self):
@@ -12,21 +12,21 @@ class MaskGenerator:
     # Find convex hull from the landmarks found in the image
     def find_convex_hull(self, points):
         hull = []
-        hullIndex = cv2.convexHull(np.array(points), clockwise=False, returnPoints=False)
+        # hullIndex = cv2.convexHull(np.array(points), clockwise=False, returnPoints=False)
 
-        addPoints = [
-            [48], [49], [50], [51], [52], [53], [54], [55], [56], [57], [58], [59],  # Outer lips
-            [60], [61], [62], [63], [64], [65], [66], [67],  # Inner lips
-            [27], [28], [29], [30], [31], [32], [33], [34], [35],  # Nose
-            [36], [37], [38], [39], [40], [41], [42], [43], [44], [45], [46], [47],  # Eyes
-            [17], [18], [19], [20], [21], [22], [23], [24], [25], [26]  # Eyebrows
-        ]
+        # addPoints = [
+        #     [48], [49], [50], [51], [52], [53], [54], [55], [56], [57], [58], [59],  # Outer lips
+        #     [60], [61], [62], [63], [64], [65], [66], [67],  # Inner lips
+        #     [27], [28], [29], [30], [31], [32], [33], [34], [35],  # Nose
+        #     [36], [37], [38], [39], [40], [41], [42], [43], [44], [45], [46], [47],  # Eyes
+        #     [17], [18], [19], [20], [21], [22], [23], [24], [25], [26]  # Eyebrows
+        # ]
+        addPoints = list(np.array(allPoints)[:,None])
+        # hullIndex = np.concatenate((hullIndex, addPoints))
+        for i in range(0, len(addPoints)):
+            hull.append(points[int(addPoints[i][0])])
 
-        hullIndex = np.concatenate((hullIndex, addPoints))
-        for i in range(0, len(hullIndex)):
-            hull.append(points[int(hullIndex[i][0])])
-
-        return hull, hullIndex
+        return hull, addPoints
 
     # Check if a point is inside a rectangle
     def rectContains(self, rect, point):
@@ -125,8 +125,8 @@ class MaskGenerator:
         ovalPoints =  np.array(allLandmarks)[oval].reshape((-1, 1, 2))
         mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
         mask1 = cv2.merge((mask1, mask1, mask1))
+
         cv2.fillPoly(mask1, [ovalPoints], (255,255,255))
-        cv2.imshow("mask", mask1)
         # Warp the triangles
         for i in range(0, len(self.target["dt"])):
             t1 = []
@@ -184,7 +184,33 @@ class MaskGenerator:
         '''
 
         # 4. Alpha blending of the two images
-        temp2 = np.multiply(target_image, (mask2 * (1.0 / 255)))
+        #make a mask for every where that isn't black in im_out_temp1
+
+
+
+        # cv2.imshow('mask3', mask3)
+        # cv2.imshow('mask2', np.uint8(mask2))
+
+        temp2 = np.multiply(target_image, (mask2*1/255))
         output = im_out_temp1 + temp2
 
+        gray = cv2.cvtColor(np.uint8(im_out_temp1), cv2.COLOR_BGR2GRAY)
+
+        # Threshold the grayscale image
+        _, mask3 = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+        # switch to 0 and 1
+        mask3 = mask3 / 255
+        # invert
+        mask3 = 1 - mask3
+        # make 3 channels
+        mask3 = cv2.merge((mask3, mask3, mask3))
+        # dilate
+        kernel = np.ones((10, 10), np.uint8)
+        mask3 = cv2.dilate(mask3, kernel, iterations=1)
+        # switch to 0 and 255
+        # mask3 = mask3 * 255
+        temp2 = np.multiply(target_image, (mask3))
+
+        # output *= 1 - mask3
+        # output = output + temp2
         return np.uint8(output)
