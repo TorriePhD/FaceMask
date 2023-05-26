@@ -1,4 +1,4 @@
-#Face and landmarks detector
+# Face and landmarks detector
 
 import cv2
 import mediapipe as mp
@@ -8,9 +8,12 @@ import math
 from scipy.spatial.transform import Rotation
 
 lk_params = dict(winSize=(101, 101), maxLevel=15, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+
+
 def constrainPoint(p, w, h):
-  p = (min(max(p[0], 0), w - 1), min(max(p[1], 0), h - 1))
-  return p
+    p = (min(max(p[0], 0), w - 1), min(max(p[1], 0), h - 1))
+    return p
+
 
 class FaceDetector:
     def __init__(self):
@@ -46,22 +49,24 @@ class FaceDetector:
     def load_target_img(self, img_path):
         img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
         return img
+
     def load_target_video(self, video_path):
         self.cap = cv2.VideoCapture(video_path)
+
     def get_target_frame(self):
-        ret,frame = self.cap.read()
-        return ret,frame
+        ret, frame = self.cap.read()
+        return ret, frame
+
     # Draw landmarks in the image
     def drawLandmarks(self, img, landmarks):
         out = np.copy(img)
 
         self.mpDraw.draw_landmarks(out, landmarks, self.mpFaceMesh.FACEMESH_TESSELATION, self.drawSpec, self.drawSpec)
         self.mpDraw.draw_landmarks(out, landmarks, self.mpFaceMesh.FACEMESH_CONTOURS, self.drawSpec, self.drawSpec)
-        #self.mpDraw.draw_landmarks(out, landmarks, self.mpFaceMesh.FACEMESH_IRISES, self.drawSpec, self.drawSpec)
 
         return out
 
-    def calculateRotation(self,lmks):
+    def calculateRotation(self, lmks):
         indexPairs = []
         offsets = []
         faceMesh_result = lmks.squeeze()
@@ -84,38 +89,29 @@ class FaceDetector:
         rotation, rmsd = Rotation.align_vectors(referencePoints, comparePoints)
         angles = Rotation.as_rotvec(rotation) * 180 / np.pi
         return angles
+
     # Find face landmarks with mediapipe
 
-    def rotateLandmarks(self,lmks,angles):
-        # faceMesh_result = lmks.squeeze()
+    def rotateLandmarks(self, lmks, angles):
         rotation = Rotation.from_rotvec(angles * np.pi / 180)
         rotated = rotation.apply(lmks)
         return rotated
-    def scaleLandmarks(self,lmks,scale):
+
+    def scaleLandmarks(self, lmks, scale):
         height, width = scale
 
         faceMesh_result = lmks.squeeze()
         scaled = faceMesh_result * (width, height)
         scaled = scaled.astype(np.int32)
         return scaled
+
     def find_face_landmarks(self, img, draw=False):
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = self.faceMesh.process(imgRGB)
-
-        # selected_keypoint_indices = [127, 93, 58, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 288, 323, 356,
-        #                              70, 63, 105, 66, 55,
-        #                              285, 296, 334, 293, 300, 168, 6, 195, 4, 64, 60, 94, 290, 439, 33, 160, 158, 173,
-        #                              153, 144, 398, 385,
-        #                              387, 466, 373, 380, 61, 40, 39, 0, 269, 270, 291, 321, 405, 17, 181, 91, 78, 81,
-        #                              13, 311, 306, 402, 14,
-        #                              178, 162, 54, 67, 10, 297, 284, 389]
-
         if not results.multi_face_landmarks:
             print('Face not detected!!!')
-            return [], None, None,None,None
+            return [], None, None, None, None
 
-        landmarks = []
-        height, width = img.shape[:-1]
         allLandmarks = []
         if results.multi_face_landmarks:
             face_landmarks = results.multi_face_landmarks[0]
@@ -129,10 +125,4 @@ class FaceDetector:
                 face_keypnts[idx][0] = value.x
                 face_keypnts[idx][1] = value.y
                 face_keypnts[idx][2] = value.z
-            original_face_keypnts = face_keypnts.copy()
-            # face_keypnts = face_keypnts * (width, height,1)
-            # face_keypnts = face_keypnts.astype('int')
-            allLandmarks = face_keypnts
-            # for i in selected_keypoint_indices:
-            #     landmarks.append(face_keypnts[i])
-        return face_keypnts, img, face_landmarks,allLandmarks,original_face_keypnts
+        return face_keypnts, img, face_landmarks
