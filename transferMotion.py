@@ -24,6 +24,8 @@ def transferMotion(srcFrame,dstFrame):
     allLandmarks = detector.rotateLandmarks(allLandmarks, -target_rotation)
     allLandmarks = detector.scaleLandmarks(allLandmarks[:, :2], srcFrame.shape[:-1])
     orglandmarks = detector.scaleLandmarks(orglandmarks[:, :2], srcFrame.shape[:-1])
-    maskGenerator.applyTargetMask(srcFrame, np.zeros_like(srcFrame), landmarks, allLandmarks, orglandmarks)
+    maskGenerator.applyTargetMask(srcFrame, np.zeros((srcFrame.shape[0] * 2, srcFrame.shape[1] * 2,3)), landmarks, allLandmarks, orglandmarks)
     output = maskGenerator.applyTargetMaskToTarget(landmarks)
-    return output
+    _, _, outLmks1 = detector.find_face_landmarks(output)
+    display = detector.drawLandmarks(np.zeros_like(output), outLmks1)
+    return output,display

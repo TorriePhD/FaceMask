@@ -110,7 +110,7 @@ class FaceDetector:
         results = self.faceMesh.process(imgRGB)
         if not results.multi_face_landmarks:
             print('Face not detected!!!')
-            return [], None, None, None, None
+            return [], None, None
 
         allLandmarks = []
         if results.multi_face_landmarks:

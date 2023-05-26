@@ -38,16 +38,23 @@ class MaskGenerator:
             t2RectInt.append(((t2[i][0] - r2[0]), (t2[i][1] - r2[1])))
 
         mask = np.zeros((r2[3], r2[2], 3), dtype=np.float32)
+        # mask = np.zeros_like(img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]], dtype=np.float32)
+        # print("mask shape", mask.shape)
+        # if mask.shape[0] ==0 or mask.shape[1] == 0 or mask.shape[2] == 0:
+        #     print("mask shape is 0")
+        #     return
         cv2.fillConvexPoly(mask, np.int32(t2RectInt), (1.0, 1.0, 1.0), 16, 0)
         img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
 
         size = (r2[2], r2[3])
         #if any dimension is 0, return
         if img1Rect.shape[0] ==0 or img1Rect.shape[1] == 0 or img1Rect.shape[2] == 0:
+            print("img1Rect shape is 0")
             return
         img2Rect = self.applyAffineTransform(img1Rect, t1Rect, t2Rect, size)
         img2Rect = img2Rect * mask
         if img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]].shape != mask.shape:
+            print("img2 shape is not equal to mask shape")
             return
         img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]] = img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]] * (
                 (1.0, 1.0, 1.0) - mask)
@@ -65,6 +72,10 @@ class MaskGenerator:
     def applyTargetMask(self,frame, actual_img, actual_landmarks,allLandmarks,orgLandmarks):
         warped_img = np.copy(actual_img)
         ovalPoints =  np.array(allLandmarks)[oval].reshape((-1, 1, 2))
+        #center the oval points
+        self.centerOffset = (-ovalPoints[0,0,0]+warped_img.shape[1]//2, -ovalPoints[0,0,1]+warped_img.shape[0]//2)
+        ovalPoints = ovalPoints + self.centerOffset
+
         mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
         mask1 = cv2.merge((mask1, mask1, mask1))
 
@@ -76,6 +87,7 @@ class MaskGenerator:
             for j in range(0, 3):
                 t1.append(self.target["landmarks"][triangles[i][j]])
                 t2.append(actual_landmarks[triangles[i][j]])
+                t2[j] = t2[j] + self.centerOffset
             self.warpTriangle(self.target["image"], warped_img, t1, t2)
         for i in range(0, len(mouthTrianges)):
             t1 = []
@@ -83,19 +95,19 @@ class MaskGenerator:
             for j in range(0, 3):
                 t1.append(orgLandmarks[mouthTrianges[i][j]])
                 t2.append(actual_landmarks[mouthTrianges[i][j]])
+                t2[j] = t2[j] + self.centerOffset
+
 
             self.warpTriangle(frame, warped_img, t1, t2)
         # Alpha blending of the two images
         temp1 = np.multiply(warped_img, (mask1 * (1.0 / 255)))
-
-
-
         self.temp1 = temp1
         self.mask1 = mask1
     def applyTargetMaskToTarget(self, actual_landmarks):
         t_w, t_h = (self.target["width"], self.target["height"])
         # 0. Calculate homography actual_landmarks -> target_landmarks
         pts_src = np.array([[p[0], p[1]] for p in actual_landmarks])
+        pts_src = pts_src + self.centerOffset
         dst_src = np.array([[p[0], p[1]] for p in self.target["landmarks"]])
         h, _ = cv2.findHomography(pts_src, dst_src)
 
