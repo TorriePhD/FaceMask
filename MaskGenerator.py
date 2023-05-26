@@ -82,6 +82,9 @@ class MaskGenerator:
         img1Rect = img1[r1[1]:r1[1] + r1[3], r1[0]:r1[0] + r1[2]]
 
         size = (r2[2], r2[3])
+        #if any dimension is 0, return
+        if img1Rect.shape[0] ==0 or img1Rect.shape[1] == 0 or img1Rect.shape[2] == 0:
+            return
         img2Rect = self.applyAffineTransform(img1Rect, t1Rect, t2Rect, size)
         img2Rect = img2Rect * mask
         if img2[r2[1]:r2[1] + r2[3], r2[0]:r2[0] + r2[2]].shape != mask.shape:

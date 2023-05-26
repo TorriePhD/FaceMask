@@ -8,4 +8,5 @@ __pycache__/Detector.cpython-38.pyc
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/FaceMask.iml
 images/*
+videos/*
 __pycache__/

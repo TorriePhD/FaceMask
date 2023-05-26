@@ -18,7 +18,7 @@ class FaceDetector:
         self.mpFaceMesh = mp.solutions.face_mesh
         self.faceMesh = self.mpFaceMesh.FaceMesh(True, 1, True, 0.2, 0.5)
         self.drawSpec = self.mpDraw.DrawingSpec(thickness=1, circle_radius=1, color=(200, 200, 0))
-
+        self.cap = None
         self.stream_started = False
 
     def stabilizeVideoStream(self, frame, landmarks):
@@ -47,9 +47,10 @@ class FaceDetector:
         img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
         return img
     def load_target_video(self, video_path):
-        cap = cv2.VideoCapture(video_path)
-        ret,frame = cap.read()
-        return frame
+        self.cap = cv2.VideoCapture(video_path)
+    def get_target_frame(self):
+        ret,frame = self.cap.read()
+        return ret,frame
     # Draw landmarks in the image
     def drawLandmarks(self, img, landmarks):
         out = np.copy(img)

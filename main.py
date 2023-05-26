@@ -20,7 +20,8 @@ def showImages(actual, target, output1, output2):
     frame[:img_out2.shape[0], img_actual.shape[1] + img_target.shape[1] + img_out1.shape[1]:img_actual.shape[1] + img_target.shape[1] + img_out1.shape[1] + img_out2.shape[1]] = img_out2
 
     frame = cv2.resize(frame, (frame.shape[1]//2, frame.shape[0]//2))
-    cv2.imshow('Face Mask', frame)
+    # cv2.imshow('Face Mask', frame)
+    return frame
 
 # Target
 #target_image, target_alpha = detector.load_target_img("images/cage.png")
@@ -29,27 +30,27 @@ drive = Path("C:/Users/Shad Torrie/Documents/compute/DoorData")
 np.random.seed(0)
 for i in range(0,100):
     # np.random.seed(1)
-    randomVideo = np.random.choice(list(drive.rglob('*.mp4')))
-    target_image = detector.load_target_video(str(randomVideo))
+    randomDestination = np.random.choice(list(drive.rglob('*.mp4')))
+    detector.load_target_video(str(randomDestination))
 
-
-    cap = cv2.VideoCapture(str(np.random.choice(list(drive.rglob('*.mp4')))))
-    print("starting New video")
-    # cap = cv2.VideoCapture(0)
-    # target_image = detector.load_target_video("images/casey.mp4")
-    #target_image, target_alpha = detector.load_target_img("images/trump.png")
-    #target_image, target_alpha = detector.load_target_img("images/kim.png")
-    #target_image, target_alpha = detector.load_target_img("images/putin.png")
-    target_landmarks, _, target_face_landmarks,targetallLandmarks,targetUnscaledlmks = detector.find_face_landmarks(target_image)
-    target_rotation = detector.calculateRotation(targetUnscaledlmks)
-    target_image_out = detector.drawLandmarks(target_image, target_face_landmarks)
-    target_landmarks = detector.scaleLandmarks(np.array(target_landmarks)[:,:2],target_image.shape[:-1])
-    maskGenerator.calculateTargetInfo(target_image, target_landmarks)
-
+    randomSource = np.random.choice(list(drive.rglob('*.mp4')))
+    cap = cv2.VideoCapture(str(randomSource))
+    videoWriter = None
     while True:
         success, frame = cap.read()
         if not success:
             break
+        success,target_image = detector.get_target_frame()
+        if not success:
+            break
+        target_landmarks, _, target_face_landmarks, targetallLandmarks, targetUnscaledlmks = detector.find_face_landmarks(
+            target_image)
+        if len(target_landmarks) == 0:
+            continue
+        target_rotation = detector.calculateRotation(targetUnscaledlmks)
+        target_image_out = detector.drawLandmarks(target_image, target_face_landmarks)
+        target_landmarks = detector.scaleLandmarks(np.array(target_landmarks)[:, :2], target_image.shape[:-1])
+        maskGenerator.calculateTargetInfo(target_image, target_landmarks)
         # frame = cv2.resize(frame, (640, 480), interpolation=cv2.INTER_AREA)
         orglandmarks, image, face_landmarks,allLandmarks,Unscaledlmks = detector.find_face_landmarks(frame)
         if len(orglandmarks) == 0:
@@ -71,6 +72,10 @@ for i in range(0,100):
         dstLandmarks = detector.scaleLandmarks(dstLandmarks[:, :2], output2.shape[:-1])
         image_out = detector.drawLandmarks(np.zeros_like(output2), face_landmarksNew)
         image_out1 = detector.drawLandmarks(np.zeros_like(output), face_landmarks)
-        showImages(image, image_out1,image_out , output2)
-
-        cv2.waitKey(1)
+        frame = showImages(image, image_out1,image_out , output2)
+        if videoWriter is None:
+            videoWriter = cv2.VideoWriter(f'videos/{randomSource.parent.parent.name}_{randomSource.parent.name}_to_{randomDestination.parent.parent.name}_{randomDestination.parent.name}.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 15, (frame.shape[1], frame.shape[0]))
+        videoWriter.write(frame)
+        # if cv2.waitKey(1) & 0xFF == ord('n'):
+        #     break
+    videoWriter.release()

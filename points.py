@@ -28,7 +28,6 @@ allPoints = FACEMESH_LIPS + FACEMESH_LEFT_EYE  + FACEMESH_LEFT_EYEBROW + FACEMES
 
 
 FACEMESH_TESSELATION = np.array(list(mp_face_mesh.FACEMESH_TESSELATION))
-print(FACEMESH_TESSELATION.shape)
 
 
 def find_triangles(edges):
