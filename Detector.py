@@ -45,13 +45,11 @@ class FaceDetector:
     # Read (target) image with alpha
     def load_target_img(self, img_path):
         img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
-        img = cv2.resize(img, (480,640), interpolation=cv2.INTER_AREA)
         return img
     def load_target_video(self, video_path):
         cap = cv2.VideoCapture(video_path)
         ret,frame = cap.read()
-        img = cv2.resize(frame, (480,640), interpolation=cv2.INTER_AREA)
-        return img
+        return frame
     # Draw landmarks in the image
     def drawLandmarks(self, img, landmarks):
         out = np.copy(img)
